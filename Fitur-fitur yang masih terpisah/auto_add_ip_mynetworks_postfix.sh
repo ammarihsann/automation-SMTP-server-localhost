@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #apt update
-#apt -y postfix dovecot-imapd dovecot-pop3d thunderbird
+#apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird
 
 # Lokasi file konfigurasi Postfix
 POSTFIX_MAIN_CF="/etc/postfix/main.cf"
