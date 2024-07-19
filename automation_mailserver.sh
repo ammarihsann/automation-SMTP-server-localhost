@@ -50,12 +50,64 @@ sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird
 
 # Baca IP baru dari input pengguna
 echo -n "Masukan IP contoh (192.168.100.0/24): "
-read ip
+read mynetworks_ip
 
 # Panggil fungsi untuk menambahkan IP ke mynetworks
-add_ip_to_mynetworks $ip
+add_ip_to_mynetworks $mynetworks_ip
 
 # Restart Postfix untuk menerapkan perubahan
 sudo systemctl restart postfix
 
-echo "Selesai menambahkan host dan mengkonfigurasi Postfix."
+echo "Postfix, Dovecot, dan Thunderbird telah diinstal dan dikonfigurasi."
+
+# Install MariaDB Server
+sudo apt-get install -y mariadb-server
+
+# Create a new MariaDB user and grant privileges
+sudo mysql -u root <<EOF
+CREATE USER 'roundcube'@'localhost' IDENTIFIED BY '123';
+GRANT ALL PRIVILEGES ON roundcube.* TO 'roundcube'@'localhost';
+FLUSH PRIVILEGES;
+EOF
+
+echo "MariaDB installation and user setup completed."
+
+# Install Roundcube
+sudo apt-get install -y roundcube
+
+# Baca domain dari input pengguna
+echo -n "Masukkan domain (contoh: debian.smofi): "
+read domain
+
+# Backup original config.inc.php
+sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
+
+# Update config.inc.php with the required configurations
+sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$domain:143'];|" /etc/roundcube/config.inc.php
+sudo sed -i "s|\(\$config\['smtp_host'\] = \).*|\1'$domain:25';|" /etc/roundcube/config.inc.php
+sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
+sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
+
+# Backup original apache.conf
+sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
+
+# Update apache.conf with the required configurations
+sudo sed -i "s|#\s*Alias /roundcube /var/lib/roundcube/|Alias /roundcube /var/lib/roundcube/|" /etc/roundcube/apache.conf
+sudo sed -i "s|<Directory /var/lib/roundcube/public_html/>|<Directory /var/lib/roundcube/>|" /etc/roundcube/apache.conf
+
+# Baca IP server dari input pengguna
+echo -n "Masukkan IP server (contoh: 192.168.100.81): "
+read server_ip
+
+# Backup original 000-default.conf
+sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.bak
+
+# Update 000-default.conf with the required configurations
+sudo sed -i "s|<VirtualHost \*:80>|<VirtualHost $server_ip:80>|" /etc/apache2/sites-available/000-default.conf
+sudo sed -i "s|ServerAdmin webmaster@localhost|ServerAdmin webmaster@$domain|" /etc/apache2/sites-available/000-default.conf
+sudo sed -i "s|DocumentRoot /var/www/html|DocumentRoot /var/lib/roundcube/|" /etc/apache2/sites-available/000-default.conf
+
+# Restart Apache to apply changes
+sudo systemctl restart apache2
+
+echo "Roundcube installation and configuration completed."
