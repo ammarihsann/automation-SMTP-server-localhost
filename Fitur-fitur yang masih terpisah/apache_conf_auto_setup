@@ -1,0 +1,11 @@
+# Backup original apache.conf
+sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
+
+# Update apache.conf with the required configurations
+sudo sed -i "s|#\s*Alias /roundcube /var/lib/roundcube/|Alias /roundcube /var/lib/roundcube/|" /etc/roundcube/apache.conf
+sudo sed -i "s|<Directory /var/lib/roundcube/public_html/>|<Directory /var/lib/roundcube/>|" /etc/roundcube/apache.conf
+
+# Restart Apache to apply changes
+sudo systemctl restart apache2
+
+echo "Roundcube installation and configuration completed."
