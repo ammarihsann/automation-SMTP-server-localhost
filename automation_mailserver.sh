@@ -14,7 +14,7 @@ update_hosts() {
     read host
 
     # Baris yang akan diganti
-    OLD_LINE="127.0.1.1     $dns    $hostname"
+    OLD_LINE="127.0.1.1    $dns    $hostname"
 
     # Baris baru
     NEW_LINE="$server_ip    $dns    $host"
