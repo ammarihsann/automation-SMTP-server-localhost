@@ -5,7 +5,7 @@ update_hosts() {
     # File /etc/hosts yang akan dimodifikasi
     HOSTS_FILE="/etc/hosts"
     echo -n "Masukan IP server, contoh (192.168.100.101): "
-    read IP_server
+    read server_ip
 
     echo -n "Masukan Domain Server, contoh (smofi.com): "
     read dns
