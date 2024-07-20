@@ -1,15 +1,20 @@
 #!/bin/bash
 
-# Fungsi untuk menambahkan host ke /etc/hosts
-add_host() {
-    HOST_ENTRY=$1
-    # Tambahkan entri baru ke /etc/hosts jika belum ada
-    if grep -q "$HOST_ENTRY" /etc/hosts; then
-        echo "Host $HOST_ENTRY sudah ada di /etc/hosts. Tidak ditambahkan."
-    else
-        echo "$HOST_ENTRY" | sudo tee -a /etc/hosts > /dev/null
-        echo "Host $HOST_ENTRY berhasil ditambahkan."
-    fi
+# Fungsi untuk mengupdate entri di /etc/hosts
+update_hosts() {
+    echo -n "Masukan IP server anda, contoh (192.168.100.68): "
+    read server_ip
+
+    echo -n "Masukan Domain, contoh (smofi.com): "
+    read dns
+
+    OLD_ENTRY="127.0.1.1 $dns"
+    NEW_ENTRY="$server_ip $dns"
+    # Backup file /etc/hosts
+    sudo cp /etc/hosts /etc/hosts.bak
+    # Ubah entri di dalam /etc/hosts
+    sudo sed -i "s/$OLD_ENTRY/$NEW_ENTRY/" /etc/hosts
+    echo "Entri $OLD_ENTRY diubah menjadi $NEW_ENTRY di /etc/hosts."
 }
 
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
@@ -27,29 +32,14 @@ add_ip_to_mynetworks() {
     fi
 }
 
-# Proses penambahan host
-while true; do
-    # Baca input dari pengguna
-    echo -n "Tambahkan IP host contoh (192.168.100.212 smofi.com smofi): "
-    read host
-
-    # Panggil fungsi untuk menambahkan host
-    add_host "$host"
-
-    # Tanyakan apakah ingin menambah host lagi
-    echo -n "Apakah ingin menambah host lagi? (y/n): "
-    read answer
-    if [ "$answer" != "y" ]; then
-        break
-    fi
-done
+# Panggil fungsi untuk mengupdate /etc/hosts
+update_hosts
 
 # Instalasi Postfix, Dovecot, dan Thunderbird
 sudo apt update
 sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
 sudo systemctl start apache2
 sudo systemctl enable apache2
-
 
 # Baca IP baru dari input pengguna
 echo -n "Masukan IP contoh (192.168.100.0/24): "
@@ -67,7 +57,8 @@ echo "Postfix, Dovecot, dan Thunderbird telah diinstal dan dikonfigurasi."
 sudo apt-get install -y mariadb-server
 
 echo -n "Input Password untuk user database: "
-read pass
+read -s pass
+echo
 
 # Create a new MariaDB user and grant privileges
 sudo mysql -u root <<EOF
@@ -101,16 +92,12 @@ sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
 sudo sed -i "s|#\s*Alias /roundcube /var/lib/roundcube/|Alias /roundcube /var/lib/roundcube/|" /etc/roundcube/apache.conf
 sudo sed -i "s|<Directory /var/lib/roundcube/public_html/>|<Directory /var/lib/roundcube/>|" /etc/roundcube/apache.conf
 
-# Baca IP server dari input pengguna
-echo -n "Masukkan IP server (contoh: 192.168.100.81): "
-read server_ip
-
 # Backup original 000-default.conf
 sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.bak
 
 # Update 000-default.conf with the required configurations
 sudo sed -i "s|<VirtualHost \*:80>|<VirtualHost $server_ip:80>|" /etc/apache2/sites-available/000-default.conf
-sudo sed -i "s|ServerAdmin webmaster@localhost|ServerAdmin webmaster@$domain|" /etc/apache2/sites-available/000-default.conf
+sudo sed -i "s|ServerAdmin webmaster@localhost|ServerAdmin webmaster@$dns|" /etc/apache2/sites-available/000-default.conf
 sudo sed -i "s|DocumentRoot /var/www/html|DocumentRoot /var/lib/roundcube/|" /etc/apache2/sites-available/000-default.conf
 
 # Restart Apache to apply changes
