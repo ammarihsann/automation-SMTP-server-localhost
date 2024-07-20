@@ -1,9 +1,26 @@
 #!/bin/bash
 
-# Backup file /etc/hosts
-cp /etc/hosts /etc/hosts.bak
+# File /etc/hosts yang akan dimodifikasi
+HOSTS_FILE="/etc/hosts"
+echo -n "Masukan IP server, contoh(192.168.100.101): "
+read IP_server
 
-# Ubah entri di dalam /etc/hosts
-sed -i 's/127.0.1.1 smofi.com smofi/192.168.100.88 smofi.com smofi/' /etc/hosts
+echo -n "Masukan Domain Server, contoh(smofi.com): "
+read dns
 
-echo "Entri telah diubah."
+echo -n "Masukan Hostname, contoh(smofi): "
+read host
+
+# Baris yang akan diganti
+OLD_LINE="127.0.1.1     $dns    $hostname"
+
+# Baris baru
+NEW_LINE="$IP_server    $dns    $host"
+
+# Backup file /etc/hosts sebelum melakukan perubahan
+cp $HOSTS_FILE "${HOSTS_FILE}.bak"
+
+# Gunakan sed untuk mengganti baris lama dengan baris baru
+sed -i "s|$OLD_LINE|$NEW_LINE|" $HOSTS_FILE
+
+echo "IP address has been updated in $HOSTS_FILE"
