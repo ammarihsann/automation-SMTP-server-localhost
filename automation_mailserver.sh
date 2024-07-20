@@ -50,6 +50,7 @@ sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
 sudo systemctl start apache2
 sudo systemctl enable apache2
 
+
 # Baca IP baru dari input pengguna
 echo -n "Masukan IP contoh (192.168.100.0/24): "
 read mynetworks_ip
