@@ -2,19 +2,30 @@
 
 # Fungsi untuk mengupdate entri di /etc/hosts
 update_hosts() {
-    echo -n "Masukan IP server anda, contoh (192.168.100.68): "
-    read server_ip
+    # File /etc/hosts yang akan dimodifikasi
+    HOSTS_FILE="/etc/hosts"
+    echo -n "Masukan IP server, contoh (192.168.100.101): "
+    read IP_server
 
-    echo -n "Masukan Domain, contoh (smofi.com): "
+    echo -n "Masukan Domain Server, contoh (smofi.com): "
     read dns
 
-    OLD_ENTRY="127.0.1.1 $dns"
-    NEW_ENTRY="$server_ip $dns"
-    # Backup file /etc/hosts
-    sudo cp /etc/hosts /etc/hosts.bak
-    # Ubah entri di dalam /etc/hosts
-    sudo sed -i "s/$OLD_ENTRY/$NEW_ENTRY/" /etc/hosts
-    echo "Entri $OLD_ENTRY diubah menjadi $NEW_ENTRY di /etc/hosts."
+    echo -n "Masukan Hostname, contoh (smofi): "
+    read host
+
+    # Baris yang akan diganti
+    OLD_LINE="127.0.1.1     $dns    $hostname"
+
+    # Baris baru
+    NEW_LINE="$IP_server    $dns    $host"
+
+    # Backup file /etc/hosts sebelum melakukan perubahan
+    sudo cp $HOSTS_FILE "${HOSTS_FILE}.bak"
+
+    # Gunakan sed untuk mengganti baris lama dengan baris baru
+    sudo sed -i "s|$OLD_LINE|$NEW_LINE|" $HOSTS_FILE
+
+    echo "IP address has been updated in $HOSTS_FILE"
 }
 
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
@@ -51,7 +62,7 @@ add_ip_to_mynetworks $mynetworks_ip
 # Restart Postfix untuk menerapkan perubahan
 sudo systemctl restart postfix
 
-echo "Postfix, Dovecot, dan Thunderbird telah diinstal dan dikonfigurasi."
+echo "Postfix, Dovecot, dan Thunderbird Apache2 telah diinstal dan dikonfigurasi."
 
 # Install MariaDB Server
 sudo apt-get install -y mariadb-server
@@ -72,16 +83,12 @@ echo "MariaDB installation and user setup completed."
 # Install Roundcube
 sudo apt-get install -y roundcube
 
-# Baca domain dari input pengguna
-echo -n "Masukkan domain (contoh: debian.smofi): "
-read domain
-
 # Backup original config.inc.php
 sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
 
 # Update config.inc.php with the required configurations
-sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$domain:143'];|" /etc/roundcube/config.inc.php
-sudo sed -i "s|\(\$config\['smtp_host'\] = \).*|\1'$domain:25';|" /etc/roundcube/config.inc.php
+sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
+sudo sed -i "s|\(\$config\['smtp_host'\] = \).*|\1'$dns:25';|" /etc/roundcube/config.inc.php
 sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
 sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
 
