@@ -68,7 +68,7 @@ echo "Postfix, Dovecot, dan Thunderbird Apache2 telah diinstal dan dikonfigurasi
 sudo apt-get install -y mariadb-server
 
 echo -n "Input Password untuk user database: "
-read -s pass
+read pass
 echo
 
 # Create a new MariaDB user and grant privileges
