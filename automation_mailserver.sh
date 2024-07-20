@@ -14,7 +14,7 @@ update_hosts() {
     read host
 
     # Baris yang akan diganti
-    OLD_LINE="127.0.1.1    $dns    $hostname"
+    OLD_LINE="127.0.1.1    $dns    $host"
 
     # Baris baru
     NEW_LINE="$server_ip    $dns    $host"
@@ -23,7 +23,7 @@ update_hosts() {
     sudo cp $HOSTS_FILE "${HOSTS_FILE}.bak"
 
     # Gunakan sed untuk mengganti baris lama dengan baris baru
-    sudo sed -i "s|$OLD_LINE|$NEW_LINE|" $HOSTS_FILE
+    sudo sed -i "/127.0.1.1.*$dns.*$host/c\\$NEW_LINE" $HOSTS_FILE
 
     echo "IP address has been updated in $HOSTS_FILE"
 }
