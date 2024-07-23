@@ -23,9 +23,12 @@ update_hosts() {
     sudo cp $HOSTS_FILE "${HOSTS_FILE}.bak"
 
     # Gunakan sed untuk mengganti baris lama dengan baris baru
-    sudo sed -i "/127.0.1.1.*$dns.*$host/c\\$NEW_LINE" $HOSTS_FILE
-
-    echo "IP address has been updated in $HOSTS_FILE"
+    if grep -q "127.0.1.1.*$dns.*$host" $HOSTS_FILE; then
+        sudo sed -i "/127.0.1.1.*$dns.*$host/c\\$NEW_LINE" $HOSTS_FILE
+        echo "IP address has been updated in $HOSTS_FILE"
+    else
+        echo "Baris dengan 127.0.1.1 $dns $host tidak ditemukan di $HOSTS_FILE"
+    fi
 }
 
 # Proses update hosts
@@ -62,7 +65,7 @@ add_ip_to_mynetworks $mynetworks_ip
 # Restart Postfix untuk menerapkan perubahan
 sudo systemctl restart postfix
 
-echo "Postfix, Dovecot,Thunderbird, dan Apache2 telah diinstal dan dikonfigurasi."
+echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal dan dikonfigurasi."
 
 # Install MariaDB Server
 sudo apt-get install -y mariadb-server
@@ -72,7 +75,7 @@ read pass
 
 # Create a new MariaDB user and grant privileges
 sudo mysql -u root <<EOF
-CREATE USER 'roundcube'@'localhost' IDENTIFIED BY '$pass';
+CREATE USER IF NOT EXISTS 'roundcube'@'localhost' IDENTIFIED BY '$pass';
 GRANT ALL PRIVILEGES ON roundcube.* TO 'roundcube'@'localhost';
 FLUSH PRIVILEGES;
 EOF
