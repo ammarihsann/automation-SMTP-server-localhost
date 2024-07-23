@@ -1,37 +1,5 @@
 #!/bin/bash
 
-# File /etc/hosts yang akan dimodifikasi
-HOSTS_FILE="/etc/hosts"
-
-# Fungsi untuk update file /etc/hosts
-update_hosts() {
-    echo -n "Masukan IP server, contoh (192.168.100.101): "
-    read server_ip
-
-    echo -n "Masukan Domain Server, contoh (smofi.com): "
-    read dns
-
-    echo -n "Masukan Hostname, contoh (smofi): "
-    read host
-
-    # Baris yang akan diganti
-    OLD_LINE="127.0.1.1    $dns    $host"
-
-    # Baris baru
-    NEW_LINE="$server_ip    $dns    $host"
-
-    # Backup file /etc/hosts sebelum melakukan perubahan
-    sudo cp $HOSTS_FILE "${HOSTS_FILE}.bak"
-
-    # Gunakan sed untuk mengganti baris lama dengan baris baru
-    if grep -q "127.0.1.1.*$dns.*$host" $HOSTS_FILE; then
-        sudo sed -i "/127.0.1.1.*$dns.*$host/c\\$NEW_LINE" $HOSTS_FILE
-        echo "IP address has been updated in $HOSTS_FILE"
-    else
-        echo "Baris dengan 127.0.1.1 $dns $host tidak ditemukan di $HOSTS_FILE"
-    fi
-}
-
 # Fungsi untuk instalasi Postfix, Dovecot, Thunderbird, dan Apache2
 install_mail_server() {
     sudo apt update
@@ -152,8 +120,14 @@ EOF
 
 # Proses utama
 main() {
-    # Update hosts
-    update_hosts
+    echo -n "Masukan IP server, contoh (192.168.100.101): "
+    read server_ip
+
+    echo -n "Masukan Domain Server, contoh (smofi.com): "
+    read dns
+
+    echo -n "Masukan Hostname, contoh (smofi): "
+    read host
 
     # Install Postfix, Dovecot, Thunderbird, and Apache2
     install_mail_server
