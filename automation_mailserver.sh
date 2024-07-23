@@ -108,6 +108,48 @@ install_roundcube() {
     echo "Roundcube installation and configuration completed."
 }
 
+# Fungsi untuk instalasi dan konfigurasi BIND9
+install_bind9() {
+    sudo apt-get install -y bind9 bind9utils bind9-doc
+
+    # Backup original named.conf.local
+    sudo cp /etc/bind/named.conf.local /etc/bind/named.conf.local.bak
+
+    # Menambahkan zona untuk domain
+    cat <<EOF | sudo tee -a /etc/bind/named.conf.local
+zone "$dns" {
+    type master;
+    file "/etc/bind/db.$dns";
+};
+EOF
+
+    # Membuat file zona untuk domain
+    cat <<EOF | sudo tee /etc/bind/db.$dns
+;
+; BIND data file for $dns
+;
+\$TTL    604800
+@       IN      SOA     ns1.$dns. admin.$dns. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      ns1.$dns.
+ns1     IN      A       $server_ip
+@       IN      A       $server_ip
+EOF
+
+    # Menambahkan konfigurasi nama server di resolv.conf
+    echo "nameserver $server_ip" | sudo tee /etc/resolv.conf
+
+    # Restart BIND9 untuk menerapkan perubahan
+    sudo systemctl restart bind9
+
+    echo "BIND9 installation and configuration completed."
+}
+
 # Proses utama
 main() {
     # Update hosts
@@ -131,6 +173,9 @@ main() {
 
     # Install dan konfigurasi Roundcube
     install_roundcube $server_ip $dns
+
+    # Install dan konfigurasi BIND9
+    install_bind9
 }
 
 # Jalankan proses utama
