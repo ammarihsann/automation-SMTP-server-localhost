@@ -3,6 +3,7 @@
 # File /etc/hosts yang akan dimodifikasi
 HOSTS_FILE="/etc/hosts"
 
+# Fungsi untuk update file /etc/hosts
 update_hosts() {
     echo -n "Masukan IP server, contoh (192.168.100.101): "
     read server_ip
@@ -31,23 +32,19 @@ update_hosts() {
     fi
 }
 
-# Proses update hosts
-update_hosts
-
-# Instalasi Postfix, Dovecot, dan Thunderbird
-sudo apt update
-sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
-sudo systemctl start apache2
-sudo systemctl enable apache2
-
-# Baca IP baru dari input pengguna
-echo -n "Masukan IP contoh (192.168.100.0/24): "
-read mynetworks_ip
+# Fungsi untuk instalasi Postfix, Dovecot, Thunderbird, dan Apache2
+install_mail_server() {
+    sudo apt update
+    sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
+    sudo systemctl start apache2
+    sudo systemctl enable apache2
+    echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal."
+}
 
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
 add_ip_to_mynetworks() {
-    IP=$1
-    POSTFIX_MAIN_CF="/etc/postfix/main.cf"
+    local IP=$1
+    local POSTFIX_MAIN_CF="/etc/postfix/main.cf"
     # Cek apakah IP sudah ada di mynetworks
     if grep -q "mynetworks.*$IP" $POSTFIX_MAIN_CF; then
         echo "IP $IP sudah ada di konfigurasi mynetworks. Tidak ditambahkan."
@@ -59,57 +56,82 @@ add_ip_to_mynetworks() {
     fi
 }
 
-# Panggil fungsi untuk menambahkan IP ke mynetworks
-add_ip_to_mynetworks $mynetworks_ip
+# Fungsi untuk instalasi dan konfigurasi MariaDB
+install_mariadb() {
+    sudo apt-get install -y mariadb-server
+    echo -n "Input Password untuk user database: "
+    read pass
 
-# Restart Postfix untuk menerapkan perubahan
-sudo systemctl restart postfix
-
-echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal dan dikonfigurasi."
-
-# Install MariaDB Server
-sudo apt-get install -y mariadb-server
-
-echo -n "Input Password untuk user database: "
-read pass
-
-# Create a new MariaDB user and grant privileges
-sudo mysql -u root <<EOF
+    # Create a new MariaDB user and grant privileges
+    sudo mysql -u root <<EOF
 CREATE USER IF NOT EXISTS 'roundcube'@'localhost' IDENTIFIED BY '$pass';
 GRANT ALL PRIVILEGES ON roundcube.* TO 'roundcube'@'localhost';
 FLUSH PRIVILEGES;
 EOF
+    echo "MariaDB installation and user setup completed."
+}
 
-echo "MariaDB installation and user setup completed."
+# Fungsi untuk instalasi dan konfigurasi Roundcube
+install_roundcube() {
+    local server_ip=$1
+    local dns=$2
 
-# Install Roundcube
-sudo apt-get install -y roundcube
+    sudo apt-get install -y roundcube
 
-# Backup original config.inc.php
-sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
+    # Backup original config.inc.php
+    sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
 
-# Update config.inc.php with the required configurations
-sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
-sudo sed -i "s|\(\$config\['smtp_host'\] = \).*|\1'$dns:25';|" /etc/roundcube/config.inc.php
-sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
-sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
+    # Update config.inc.php with the required configurations
+    sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
+    sudo sed -i "s|\(\$config\['smtp_host'\] = \).*|\1'$dns:25';|" /etc/roundcube/config.inc.php
+    sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
+    sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
 
-# Backup original apache.conf
-sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
+    # Backup original apache.conf
+    sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
 
-# Update apache.conf with the required configurations
-sudo sed -i "s|#\s*Alias /roundcube /var/lib/roundcube/|Alias /roundcube /var/lib/roundcube/|" /etc/roundcube/apache.conf
-sudo sed -i "s|<Directory /var/lib/roundcube/public_html/>|<Directory /var/lib/roundcube/>|" /etc/roundcube/apache.conf
+    # Update apache.conf with the required configurations
+    sudo sed -i "s|#\s*Alias /roundcube /var/lib/roundcube/|Alias /roundcube /var/lib/roundcube/|" /etc/roundcube/apache.conf
+    sudo sed -i "s|<Directory /var/lib/roundcube/public_html/>|<Directory /var/lib/roundcube/>|" /etc/roundcube/apache.conf
 
-# Backup original 000-default.conf
-sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.bak
+    # Backup original 000-default.conf
+    sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.bak
 
-# Update 000-default.conf with the required configurations
-sudo sed -i "s|<VirtualHost \*:80>|<VirtualHost $server_ip:80>|" /etc/apache2/sites-available/000-default.conf
-sudo sed -i "s|ServerAdmin webmaster@localhost|ServerAdmin webmaster@$dns|" /etc/apache2/sites-available/000-default.conf
-sudo sed -i "s|DocumentRoot /var/www/html|DocumentRoot /var/lib/roundcube/|" /etc/apache2/sites-available/000-default.conf
+    # Update 000-default.conf with the required configurations
+    sudo sed -i "s|<VirtualHost \*:80>|<VirtualHost $server_ip:80>|" /etc/apache2/sites-available/000-default.conf
+    sudo sed -i "s|ServerAdmin webmaster@localhost|ServerAdmin webmaster@$dns|" /etc/apache2/sites-available/000-default.conf
+    sudo sed -i "s|DocumentRoot /var/www/html|DocumentRoot /var/lib/roundcube/|" /etc/apache2/sites-available/000-default.conf
 
-# Restart Apache to apply changes
-sudo systemctl restart apache2
+    # Restart Apache to apply changes
+    sudo systemctl restart apache2
 
-echo "Roundcube installation and configuration completed."
+    echo "Roundcube installation and configuration completed."
+}
+
+# Proses utama
+main() {
+    # Update hosts
+    update_hosts
+
+    # Install Postfix, Dovecot, Thunderbird, and Apache2
+    install_mail_server
+
+    # Baca IP baru dari input pengguna
+    echo -n "Masukan IP contoh (192.168.100.0/24): "
+    read mynetworks_ip
+
+    # Tambahkan IP ke konfigurasi mynetworks
+    add_ip_to_mynetworks $mynetworks_ip
+
+    # Restart Postfix untuk menerapkan perubahan
+    sudo systemctl restart postfix
+
+    # Install dan konfigurasi MariaDB
+    install_mariadb
+
+    # Install dan konfigurasi Roundcube
+    install_roundcube $server_ip $dns
+}
+
+# Jalankan proses utama
+main
