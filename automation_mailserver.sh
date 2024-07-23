@@ -62,7 +62,7 @@ add_ip_to_mynetworks $mynetworks_ip
 # Restart Postfix untuk menerapkan perubahan
 sudo systemctl restart postfix
 
-echo "Postfix, Dovecot, dan Thunderbird telah diinstal dan dikonfigurasi."
+echo "Postfix, Dovecot,Thunderbird, dan Apache2 telah diinstal dan dikonfigurasi."
 
 # Install MariaDB Server
 sudo apt-get install -y mariadb-server
