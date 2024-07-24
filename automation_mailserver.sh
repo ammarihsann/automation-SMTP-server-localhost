@@ -86,6 +86,19 @@ install_roundcube() {
     echo "Roundcube installation and configuration completed."
 }
 
+backup_roundcube() {
+    local backup_dir="/var/backups/roundcube"
+    local timestamp=$(date +'%Y%m%d%H%M%S')
+    local backup_file="$backup_dir/roundcube_backup_$timestamp.tar.gz"
+
+    # Buat direktori backup jika belum ada
+    sudo mkdir -p $backup_dir
+
+    # Backup direktori Roundcube dan database
+    sudo tar -czvf $backup_file /var/lib/roundcube /etc/roundcube
+    echo "Backup data Roundcube selesai. File backup disimpan di $backup_file."
+}
+
 # Fungsi untuk instalasi dan konfigurasi BIND9
 install_bind9() {
     sudo apt-get install -y bind9 bind9utils bind9-doc
@@ -161,6 +174,7 @@ main() {
 
     # Install dan konfigurasi BIND9
     install_bind9
+    (sudo crontab -l ; echo "0 2 * * * /path/to/this_script.sh backup_roundcube") | sudo crontab -
 }
 
 # Jalankan proses utama
