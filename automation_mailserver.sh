@@ -126,9 +126,6 @@ main() {
     echo -n "Masukan Domain Server, contoh (smofi.com): "
     read dns
 
-    echo -n "Masukan Hostname, contoh (smofi): "
-    read host
-
     # Install Postfix, Dovecot, Thunderbird, and Apache2
     install_mail_server
 
