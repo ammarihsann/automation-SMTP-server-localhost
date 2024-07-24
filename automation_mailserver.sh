@@ -6,13 +6,15 @@ install_mail_server() {
     sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
     sudo systemctl start apache2
     sudo systemctl enable apache2
-    echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal."
+    echo "Postfix, Dovecot, dan Apache2 telah diinstal."
 }
 
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
 add_ip_to_mynetworks() {
     local IP=$1
+    local dns=$2
     local POSTFIX_MAIN_CF="/etc/postfix/main.cf"
+    sudo sed -i "s|^\(myhostname = \).*|\1$dns|" /etc/postfix/main.cf
     # Cek apakah IP sudah ada di mynetworks
     if grep -q "mynetworks.*$IP" $POSTFIX_MAIN_CF; then
         echo "IP $IP sudah ada di konfigurasi mynetworks. Tidak ditambahkan."
@@ -50,8 +52,7 @@ install_roundcube() {
     sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
 
     # Update config.inc.php with the required configurations
-    sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
-    sudo sed -i "s|\(\$config\['smtp_host'\] = \).*|\1'$dns:25';|" /etc/roundcube/config.inc.php
+    sudo tee -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
     sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
     sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
 
@@ -104,9 +105,12 @@ EOF
                         2419200         ; Expire
                          604800 )       ; Negative Cache TTL
 ;
-@       IN      NS      ns1.$dns.
-ns1     IN      A       $server_ip
+@       IN      NS      ns.$dns.
+ns     IN      A       $server_ip
+@      IN      A        $server_ip
+mail    IN    A        $server_ip
 @       IN      A       $server_ip
+
 EOF
 
     # Menambahkan konfigurasi nama server di resolv.conf
