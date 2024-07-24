@@ -28,7 +28,7 @@ add_ip_to_mynetworks() {
 install_mariadb() {
     sudo apt-get install -y mariadb-server
     echo -n "Input Password untuk user database: "
-    read -s pass
+    read pass
     echo
 
     # Create a new MariaDB user and grant privileges
