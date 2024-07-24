@@ -120,7 +120,7 @@ EOF
 
 # Proses utama
 main() {
-    echo -n "Masukan IP server, contoh (192.168.100.101): "
+    echo -n "Masukan IP Server anda (IP Linux Anda): "
     read server_ip
 
     echo -n "Masukan Domain Server, contoh (smofi.com): "
@@ -130,7 +130,7 @@ main() {
     install_mail_server
 
     # Baca IP baru dari input pengguna
-    echo -n "Masukan IP contoh (192.168.100.0/24): "
+    echo -n "Masukan IP Network Linux Anda contoh (192.168.100.0/24): "
     read mynetworks_ip
 
     # Tambahkan IP ke konfigurasi mynetworks
