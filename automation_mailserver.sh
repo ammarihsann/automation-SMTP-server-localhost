@@ -14,7 +14,9 @@ add_ip_to_mynetworks() {
     local IP=$1
     local dns=$2
     local POSTFIX_MAIN_CF="/etc/postfix/main.cf"
-    sudo sed -i "s|^\(myhostname = \).*|\1$dns|" /etc/postfix/main.cf
+
+    sudo sed -i "s|^\(myhostname[ \t]*=[ \t]*\).*|\1$dns|" /etc/postfix/main.cf
+
     # Cek apakah IP sudah ada di mynetworks
     if grep -q "mynetworks.*$IP" $POSTFIX_MAIN_CF; then
         echo "IP $IP sudah ada di konfigurasi mynetworks. Tidak ditambahkan."
