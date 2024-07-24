@@ -9,6 +9,16 @@ install_mail_server() {
     echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal."
 }
 
+gui_mail(){
+echo "╱╱╱╱╱╱╱╱╱╱╱╱╱╭╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╱╭╮"
+echo "╱╱╱╱╱╱╱╱╱╱╱╱╱┃┃╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╭╯╰╮"
+echo "╭━┳━━┳╮╭┳━╮╭━╯┣━━┳╮╭┫╰━┳━━┳╮╭┳━┻╮╭╋┳━━╮"
+echo "┃╭┫╭╮┃┃┃┃╭╮┫╭╮┃╭━┫┃┃┃╭╮┃┃━┫╰╯┃╭╮┃┃┣┫╭━╯"
+echo "┃┃┃╰╯┃╰╯┃┃┃┃╰╯┃╰━┫╰╯┃╰╯┃┃━┫┃┃┃╭╮┃╰┫┃╰━╮"
+echo "╰╯╰━━┻━━┻╯╰┻━━┻━━┻━━┻━━┻━━┻┻┻┻╯╰┻━┻┻━━╯"
+echo "Selamat datang di RoundcubeMatic!"
+}
+
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
 add_ip_to_mynetworks() {
     local IP=$1
@@ -120,6 +130,7 @@ EOF
 
 # Proses utama
 main() {
+    gui_mail
     echo -n "Masukan IP server, contoh (192.168.100.101): "
     read server_ip
 
