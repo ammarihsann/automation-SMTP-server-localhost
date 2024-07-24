@@ -144,7 +144,7 @@ main() {
     install_mail_server
 
     # Baca IP baru dari input pengguna
-    echo -n "Masukan IP contoh (192.168.100.0/24): "
+    echo -n "Masukan IP Network contoh (192.168.100.0/24): "
     read mynetworks_ip
 
     # Tambahkan IP ke konfigurasi mynetworks
