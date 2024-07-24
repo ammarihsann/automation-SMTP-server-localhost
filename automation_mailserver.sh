@@ -52,8 +52,8 @@ install_roundcube() {
     sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
 
     # Update config.inc.php with the required configurations
-    sudo tee -i "s|\(\$config\['smtp_server'\] = \).*|\1['$dns'];|" /etc/roundcube/config.inc.ph
-    sudo tee -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
+    echo "\$config['smtp_server'] = '$dns';" | sudo tee -a /etc/roundcube/config.inc.php
+    echo "\$config['imap_host'] = '$dns:143';" | sudo tee -a /etc/roundcube/config.inc.php
     sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
     sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
 
