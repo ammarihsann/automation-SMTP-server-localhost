@@ -3,10 +3,11 @@
 # Fungsi untuk instalasi Postfix, Dovecot, Thunderbird, dan Apache2
 install_mail_server() {
     sudo apt update
-    sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
+    sudo apt install -y postfix dovecot-imapd dovecot-pop3d apache2
+    sudo apt-get install cron
     sudo systemctl start apache2
     sudo systemctl enable apache2
-    echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal."
+    echo "Postfix, Dovecot, dan Apache2 telah diinstal."
 }
 
 gui_mail(){
