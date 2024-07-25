@@ -112,8 +112,6 @@ EOF
 @       IN      NS      ns.$dns.
 ns      IN      A       $server_ip
 @       IN      A       $server_ip
-mail    IN      A       $server_ip
-@       IN      A       $server_ip
 
 EOF
 
