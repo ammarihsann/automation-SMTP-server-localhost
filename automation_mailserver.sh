@@ -3,10 +3,10 @@
 # Fungsi untuk instalasi Postfix, Dovecot, Thunderbird, dan Apache2
 install_mail_server() {
     sudo apt update
-    sudo apt install -y postfix dovecot-imapd dovecot-pop3d thunderbird apache2
+    sudo apt install -y postfix dovecot-imapd dovecot-pop3d apache2
     sudo systemctl start apache2
     sudo systemctl enable apache2
-    echo "Postfix, Dovecot, Thunderbird, dan Apache2 telah diinstal."
+    echo "Postfix, Dovecot, dan Apache2 telah diinstal."
 }
 
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
@@ -85,7 +85,7 @@ install_roundcube() {
 
 # Fungsi untuk instalasi dan konfigurasi BIND9
 install_bind9() {
-    sudo apt-get install -y bind9 bind9utils bind9-doc
+    sudo apt-get install -y bind9 bind9utils bind9-doc resolvconf
 
     # Backup original named.conf.local jika belum ada
     if [ ! -f /etc/bind/named.conf.local.bak ]; then
@@ -124,7 +124,11 @@ EOF
     fi
 
     # Menambahkan konfigurasi nama server di resolv.conf
-    echo "nameserver $server_ip" | sudo tee /etc/resolv.conf
+    echo "nameserver $server_ip" | sudo tee /etc/resolvconf/resolv.conf.d/head
+
+    # Restart resolvconf untuk menerapkan perubahan
+    sudo systemctl restart resolvconf
+    sudo resolvconf -u
 
     # Restart BIND9 untuk menerapkan perubahan
     sudo systemctl restart bind9
