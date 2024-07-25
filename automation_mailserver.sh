@@ -1,23 +1,12 @@
 #!/bin/bash
 
-# Fungsi untuk instalasi Postfix, Dovecot, Thunderbird, dan Apache2
+# Fungsi untuk instalasi Postfix, Dovecot, dan Apache2
 install_mail_server() {
     sudo apt update
     sudo apt install -y postfix dovecot-imapd dovecot-pop3d apache2
-    sudo apt-get install cron
     sudo systemctl start apache2
     sudo systemctl enable apache2
     echo "Postfix, Dovecot, dan Apache2 telah diinstal."
-}
-
-gui_mail(){
-echo "╱╱╱╱╱╱╱╱╱╱╱╱╱╭╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╱╭╮"
-echo "╱╱╱╱╱╱╱╱╱╱╱╱╱┃┃╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╭╯╰╮"
-echo "╭━┳━━┳╮╭┳━╮╭━╯┣━━┳╮╭┫╰━┳━━┳╮╭┳━┻╮╭╋┳━━╮"
-echo "┃╭┫╭╮┃┃┃┃╭╮┫╭╮┃╭━┫┃┃┃╭╮┃┃━┫╰╯┃╭╮┃┃┣┫╭━╯"
-echo "┃┃┃╰╯┃╰╯┃┃┃┃╰╯┃╰━┫╰╯┃╰╯┃┃━┫┃┃┃╭╮┃╰┫┃╰━╮"
-echo "╰╯╰━━┻━━┻╯╰┻━━┻━━┻━━┻━━┻━━┻┻┻┻╯╰┻━┻┻━━╯"
-echo "Selamat datang di RoundcubeMatic!"
 }
 
 # Fungsi untuk menambahkan IP ke konfigurasi mynetworks
@@ -29,7 +18,7 @@ add_ip_to_mynetworks() {
         echo "IP $IP sudah ada di konfigurasi mynetworks. Tidak ditambahkan."
     else
         # Tambahkan IP ke mynetworks
-        awk -v new_ip="$IP" '/^mynetworks/ {print $0 ", " new_ip; next} 1' $POSTFIX_MAIN_CF > /tmp/main.cf
+        sudo awk -v new_ip="$IP" '/^mynetworks/ {print $0 ", " new_ip; next} 1' $POSTFIX_MAIN_CF > /tmp/main.cf
         sudo mv /tmp/main.cf $POSTFIX_MAIN_CF
         echo "IP $IP ditambahkan ke konfigurasi mynetworks."
     fi
@@ -40,6 +29,7 @@ install_mariadb() {
     sudo apt-get install -y mariadb-server
     echo -n "Input Password untuk user database: "
     read pass
+    echo
 
     # Create a new MariaDB user and grant privileges
     sudo mysql -u root <<EOF
@@ -57,8 +47,10 @@ install_roundcube() {
 
     sudo apt-get install -y roundcube
 
-    # Backup original config.inc.php
-    sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
+    # Backup original config.inc.php jika belum ada
+    if [ ! -f /etc/roundcube/config.inc.php.bak ]; then
+        sudo cp /etc/roundcube/config.inc.php /etc/roundcube/config.inc.php.bak
+    fi
 
     # Update config.inc.php with the required configurations
     sudo sed -i "s|\(\$config\['imap_host'\] = \).*|\1['$dns:143'];|" /etc/roundcube/config.inc.php
@@ -66,15 +58,19 @@ install_roundcube() {
     sudo sed -i "s|\(\$config\['smtp_user'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
     sudo sed -i "s|\(\$config\['smtp_pass'\] = \).*|\1'';|" /etc/roundcube/config.inc.php
 
-    # Backup original apache.conf
-    sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
+    # Backup original apache.conf jika belum ada
+    if [ ! -f /etc/roundcube/apache.conf.bak ]; then
+        sudo cp /etc/roundcube/apache.conf /etc/roundcube/apache.conf.bak
+    fi
 
     # Update apache.conf with the required configurations
     sudo sed -i "s|#\s*Alias /roundcube /var/lib/roundcube/|Alias /roundcube /var/lib/roundcube/|" /etc/roundcube/apache.conf
     sudo sed -i "s|<Directory /var/lib/roundcube/public_html/>|<Directory /var/lib/roundcube/>|" /etc/roundcube/apache.conf
 
-    # Backup original 000-default.conf
-    sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.bak
+    # Backup original 000-default.conf jika belum ada
+    if [ ! -f /etc/apache2/sites-available/000-default.conf.bak ]; then
+        sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/000-default.conf.bak
+    fi
 
     # Update 000-default.conf with the required configurations
     sudo sed -i "s|<VirtualHost \*:80>|<VirtualHost $server_ip:80>|" /etc/apache2/sites-available/000-default.conf
@@ -87,36 +83,26 @@ install_roundcube() {
     echo "Roundcube installation and configuration completed."
 }
 
-backup_roundcube() {
-    local backup_dir="/var/backups/roundcube"
-    local timestamp=$(date +'%Y%m%d%H%M%S')
-    local backup_file="$backup_dir/roundcube_backup_$timestamp.tar.gz"
-
-    # Buat direktori backup jika belum ada
-    sudo mkdir -p $backup_dir
-
-    # Backup direktori Roundcube dan database
-    sudo tar -czvf $backup_file /var/lib/roundcube /etc/roundcube
-    echo "Backup data Roundcube selesai. File backup disimpan di $backup_file."
-}
-
 # Fungsi untuk instalasi dan konfigurasi BIND9
 install_bind9() {
-    sudo apt-get install -y bind9 bind9utils bind9-doc
+    sudo apt-get install -y bind9 bind9utils bind9-doc resolvconf
 
-    # Backup original named.conf.local
-    sudo cp /etc/bind/named.conf.local /etc/bind/named.conf.local.bak
+    # Backup original named.conf.local jika belum ada
+    if [ ! -f /etc/bind/named.conf.local.bak ]; then
+        sudo cp /etc/bind/named.conf.local /etc/bind/named.conf.local.bak
+    fi
 
-    # Menambahkan zona untuk domain
-    cat <<EOF | sudo tee -a /etc/bind/named.conf.local
+    # Tambahkan zona untuk domain jika belum ada
+    if ! grep -q "zone \"$dns\"" /etc/bind/named.conf.local; then
+        cat <<EOF | sudo tee -a /etc/bind/named.conf.local
 zone "$dns" {
     type master;
     file "/etc/bind/db.$dns";
 };
 EOF
 
-    # Membuat file zona untuk domain
-    cat <<EOF | sudo tee /etc/bind/db.$dns
+        # Membuat file zona untuk domain
+        cat <<EOF | sudo tee /etc/bind/db.$dns
 ;
 ; BIND data file for $dns
 ;
@@ -132,9 +118,17 @@ EOF
 ns1     IN      A       $server_ip
 @       IN      A       $server_ip
 EOF
+    else
+        # Update existing zone file with new IP
+        sudo sed -i "s|IN\s*A\s*[0-9.]*|IN A $server_ip|" /etc/bind/db.$dns
+    fi
 
     # Menambahkan konfigurasi nama server di resolv.conf
-    echo "nameserver $server_ip" | sudo tee /etc/resolv.conf
+    echo "nameserver $server_ip" | sudo tee /etc/resolvconf/resolv.conf.d/head
+
+    # Restart resolvconf untuk menerapkan perubahan
+    sudo systemctl restart resolvconf
+    sudo resolvconf -u
 
     # Restart BIND9 untuk menerapkan perubahan
     sudo systemctl restart bind9
@@ -144,21 +138,17 @@ EOF
 
 # Proses utama
 main() {
-    gui_mail
-    echo -n "Masukan IP server, contoh (192.168.100.101): "
+    echo -n "Masukan IP Server anda (IP Linux Anda): "
     read server_ip
 
     echo -n "Masukan Domain Server, contoh (smofi.com): "
     read dns
 
-    echo -n "Masukan Hostname, contoh (smofi): "
-    read host
-
     # Install Postfix, Dovecot, Thunderbird, and Apache2
     install_mail_server
 
     # Baca IP baru dari input pengguna
-    echo -n "Masukan IP Network contoh (192.168.100.0/24): "
+    echo -n "Masukan IP Network Linux Anda contoh (192.168.100.0/24): "
     read mynetworks_ip
 
     # Tambahkan IP ke konfigurasi mynetworks
@@ -174,8 +164,7 @@ main() {
     install_roundcube $server_ip $dns
 
     # Install dan konfigurasi BIND9
-    install_bind9
-    (sudo crontab -l ; echo "0 2 * * * /path/to/this_script.sh backup_roundcube") | sudo crontab -
+    install_bind9 $server_ip $dns
 }
 
 # Jalankan proses utama
