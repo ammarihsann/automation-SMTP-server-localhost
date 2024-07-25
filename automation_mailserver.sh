@@ -117,7 +117,7 @@ mail    IN    A        $server_ip
 EOF
 
     # Menambahkan konfigurasi nama server di resolv.conf
-    echo "nameserver $server_ip" | sudo tee /etc/resolv.conf
+     echo "nameserver $server_ip" | sudo tee /etc/resolvconf/resolv.conf.d/head
 
     # Restart BIND9 untuk menerapkan perubahan
     sudo systemctl restart bind9
