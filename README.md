@@ -36,8 +36,3 @@ During the script execution, you will be prompted for:
 - IP addresses to add to Postfix `mynetworks` (e.g., `192.168.100.0/24`)
 - Domain for Roundcube configuration (e.g., `debian.smofi`)
 - Server IP for Apache configuration (e.g., `192.168.100.81`)
-
-### Example
-
-When prompted for inputs, enter the values as shown in the example below:
-
